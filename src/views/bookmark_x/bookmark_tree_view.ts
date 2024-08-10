@@ -51,16 +51,13 @@ export class BookmarkTreeViewManager {
     }
 
     static async activateGroup(treeItem: BookmarkTreeItem) {
-        console.log("YESSSS")
-
-        let wsf = this.controller.wsf;
-        let group;
+        let wsf = util.getWsfWithActiveEditor();
         if (treeItem === undefined) {
             let cache = this.controller!.get_root_group(wsf!).cache;
-            const selectedFile: string | undefined = await vscode.window.showQuickPick(
+            let selectedFile: string | undefined = await vscode.window.showQuickPick(
                 (() => {
-                    let options = [];
-                    for (const element of cache.keys()) {
+                    let options = ["root"];
+                    for (const element of cache.keys().slice(1)) {
                         if (cache.get(element).type === "group") {
                             options.push(element)
                         }
@@ -69,9 +66,11 @@ export class BookmarkTreeViewManager {
                 })(),
                 { placeHolder: 'Select a file', canPickMany: false }
             );
-            console.log(selectedFile)
+
+            if (selectedFile === "root") { selectedFile = ""; }
             if (selectedFile === undefined) { return; }
             this.controller!.activateGroup(selectedFile, wsf!);
+            this.controller!.get_root_group(wsf!).vicache.refresh_active_icon_status(selectedFile);
             return;
         }
     }
