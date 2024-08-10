@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ThemeColor, ThemeIcon, ViewBadge } from 'vscode';
-import {Controller, SpaceMap} from './controller';
-import {BookmarkTreeItem} from './bookmark_tree_item';
+import { Controller, SpaceMap } from './controller';
+import { BookmarkTreeItem } from './bookmark_tree_item';
 import { Bookmark, Group } from './functional_types';
 import * as util from './util';
 import { ICON_GROUP, ITEM_TYPE_GROUP, ITEM_TYPE_GROUP_LIKE } from './constants';
@@ -10,7 +10,7 @@ import { BmxTreeItem } from './bookmark_tree_data_provider';
 class MyViewBadge implements ViewBadge {
     tooltip: string;
     value: number;
-    public constructor(value: number=0) {
+    public constructor(value: number = 0) {
         this.value = value;
         this.tooltip = `${this.value} bookmarks`;
     }
@@ -34,7 +34,7 @@ export class BookmarkTreeViewManager {
         // vscode.TreeViewOptions
         if (!this.view) {
             let view = vscode.window.createTreeView<BmxTreeItem>('bookmarksByGroup', {
-                treeDataProvider: this.controller.tprovider, 
+                treeDataProvider: this.controller.tprovider,
                 dragAndDropController: this.controller.tprovider,
                 showCollapseAll: true, canSelectMany: true
             });
@@ -50,23 +50,29 @@ export class BookmarkTreeViewManager {
         this.view.badge = new MyViewBadge(num);
     }
 
-    static activateGroup(treeItem: BookmarkTreeItem) {
-        const group = treeItem.getBaseGroup();
-        let wsf = this.controller.get_wsf_with_node(group!);
-        const activeGroup = this.controller!.get_active_group(wsf!);
-        if (group === null || activeGroup.get_full_uri() === group.get_full_uri()) {
-            // switch to root group
-            this.controller!.activateGroup("", wsf!);
-            vscode.window.showInformationMessage(`switch to root group`);
-            this.controller!.get_root_group(wsf!).vicache.keys().forEach(key => {
-                // reset icon status
-                let tvi = this.controller!.get_root_group(wsf!).vicache.get(key);
-                if (ITEM_TYPE_GROUP_LIKE.includes(tvi.base!.type)) { tvi.iconPath = ICON_GROUP; }
-            });
-        } else {
-            this.controller!.activateGroup(group.get_full_uri(), wsf!);
-            vscode.window.showInformationMessage(`switch to ${group.get_full_uri()}`);
-            this.controller!.get_root_group(wsf!).vicache.refresh_active_icon_status(group!.get_full_uri());
+    static async activateGroup(treeItem: BookmarkTreeItem) {
+        console.log("YESSSS")
+
+        let wsf = this.controller.wsf;
+        let group;
+        if (treeItem === undefined) {
+            let cache = this.controller!.get_root_group(wsf!).cache;
+            const selectedFile: string | undefined = await vscode.window.showQuickPick(
+                (() => {
+                    let options = [];
+                    for (const element of cache.keys()) {
+                        if (cache.get(element).type === "group") {
+                            options.push(element)
+                        }
+                    }
+                    return options;
+                })(),
+                { placeHolder: 'Select a file', canPickMany: false }
+            );
+            console.log(selectedFile)
+            if (selectedFile === undefined) { return; }
+            this.controller!.activateGroup(selectedFile, wsf!);
+            return;
         }
     }
 
@@ -76,7 +82,7 @@ export class BookmarkTreeViewManager {
             if (res) { vscode.window.showInformationMessage(`delete ${group!.get_full_uri()} successfully`); }
             else { vscode.window.showInformationMessage(`didn't delete`); }
         })
-        
+
     }
 
     static deleteBookmark(treeItem: BookmarkTreeItem) {

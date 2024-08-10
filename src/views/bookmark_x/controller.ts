@@ -14,7 +14,7 @@ import * as path from 'path';
 import { Bookmark, GroupBookmark, NodeType, NodeUriMap, RootGroup, ViewItemUriMap } from "./functional_types";
 import { Group } from './functional_types';
 import { SerializableGroup } from './serializable_type';
-import {ITEM_TYPE_BM, ITEM_TYPE_GROUP, ITEM_TYPE_GROUP_LIKE} from "./constants";
+import { ITEM_TYPE_BM, ITEM_TYPE_GROUP, ITEM_TYPE_GROUP_LIKE } from "./constants";
 import * as util from './util';
 import { BookmarkTreeDataProvider } from './bookmark_tree_data_provider';
 import { TextEncoder } from 'util';
@@ -25,8 +25,8 @@ import { error } from 'console';
 import { SAVED_WSFSDATA_KEY } from './constants';
 
 export class SpaceMap {
-    static root_group_map: {[key: string]: RootGroup} = {};
-    static active_group_map: {[key: string]: Group} = {};
+    static root_group_map: { [key: string]: RootGroup } = {};
+    static active_group_map: { [key: string]: Group } = {};
 
     static get wsfs() {
         if (vscode.workspace.workspaceFolders) {
@@ -39,7 +39,7 @@ export class SpaceMap {
     }
 }
 
-type WsfDataSerialiable = {rg: {[key: string]: any}, ag: {[key: string]: any}};
+type WsfDataSerialiable = { rg: { [key: string]: any }, ag: { [key: string]: any } };
 
 export class Controller {
 
@@ -141,7 +141,7 @@ export class Controller {
         }
     }
     public saveWsfsState() {
-        let res: WsfDataSerialiable = {rg:{}, ag:{}};
+        let res: WsfDataSerialiable = { rg: {}, ag: {} };
         workspace.workspaceFolders?.forEach(wsf => {
             res.rg[wsf.uri.path] = SpaceMap.root_group_map[wsf.uri.path].serialize();
             res.ag[wsf.uri.path] = SpaceMap.active_group_map[wsf.uri.path].get_full_uri();
@@ -155,7 +155,7 @@ export class Controller {
             return;
         } else {
             // let data = this.ctx.workspaceState.update(SAVED_WSFSDATA_KEY, undefined);
-            let data: WsfDataSerialiable = this.ctx.workspaceState.get(SAVED_WSFSDATA_KEY) ?? {rg: {}, ag: {}};
+            let data: WsfDataSerialiable = this.ctx.workspaceState.get(SAVED_WSFSDATA_KEY) ?? { rg: {}, ag: {} };
             workspace.workspaceFolders.forEach(wsf => {
                 let rg = data.rg[wsf.uri.path];
                 let ag = data.ag[wsf.uri.path];
@@ -178,10 +178,11 @@ export class Controller {
             let rg = SpaceMap.root_group_map[wsf.uri.path];
             rg.cache = rg.bfs_get_nodes();
             rg.vicache = rg.bfs_get_tvmap();
+
             rg.sortGroupBookmark();
             console.log("node map keys:", rg.cache.keys());
             console.log("view item map keys:", rg.vicache.keys());
-            console.log("restore saved state done");  
+            console.log("restore saved state done");
         });
     }
     /**
@@ -233,7 +234,7 @@ export class Controller {
      * @param {type} param1 - param1 desc
      * @returns {type} - return value desc
      */
-    public actionToggleLabeledBookmark(textEditor: TextEditor, force=false) {
+    public actionToggleLabeledBookmark(textEditor: TextEditor, force = false) {
         if (textEditor.selections.length === 0) {
             return;
         }
@@ -271,7 +272,7 @@ export class Controller {
         });
     }
 
-    public inputBoxGetName(value="") {
+    public inputBoxGetName(value = "") {
         return window.showInputBox({
             placeHolder: "node name",
             prompt: "Please enter a new node name",
@@ -312,7 +313,7 @@ export class Controller {
         });
     }
 
-    public async doSaveSerializedRoot(wsf: vscode.WorkspaceFolder|null=null) {
+    public async doSaveSerializedRoot(wsf: vscode.WorkspaceFolder | null = null) {
         if (wsf === null) {
             wsf = workspace.workspaceFolders![0];
         }
@@ -327,7 +328,7 @@ export class Controller {
         await workspace.fs.writeFile(uri, bytes);
         window.showInformationMessage("saved.");
     }
-    public async doLoadSerializedRoot(wsf: vscode.WorkspaceFolder|null=null) {
+    public async doLoadSerializedRoot(wsf: vscode.WorkspaceFolder | null = null) {
         if (wsf === null) {
             wsf = workspace.workspaceFolders![0];
         }
@@ -458,7 +459,7 @@ export class Controller {
         tvitem.label = val;
 
         rg.vicache.del(node.get_full_uri());
-        
+
         let father = this._editNodeLabel(node, val, wsf!);
         if (father) {
             father.sortGroupBookmark();
@@ -477,9 +478,9 @@ export class Controller {
         let wsf = this.get_wsf_with_node(group);
         if (group.children.length > 0) {
             let val = await
-            window.showInformationMessage(
-                "the group not empty, do you really want to delete it?", 'yes', 'no'
-            );
+                window.showInformationMessage(
+                    "the group not empty, do you really want to delete it?", 'yes', 'no'
+                );
             if (val === 'yes') {
                 this.deleteGroups(group, wsf!);
                 return true;
@@ -537,7 +538,7 @@ export class Controller {
      * @param {Boolean} force - delete the exist bm and create new.
      * @returns {Boolean} - success or fail
      */
-    public addBookmark(bm: Bookmark, force=false): boolean {
+    public addBookmark(bm: Bookmark, force = false): boolean {
         // uri confliction
         let wsf = util.getWsfWithPath(bm.fsPath);
         let rg = this.get_root_group(wsf!);
@@ -562,6 +563,7 @@ export class Controller {
      * @returns {type} - return value desc
      */
     public activateGroup(uri: string, wsf: vscode.WorkspaceFolder) {
+        console.log("MADE IT!")
         let group = this.get_root_group(wsf).cache.get(uri) as Group;
         if (group === this.get_active_group(wsf)) {
             return;
@@ -772,7 +774,7 @@ export class Controller {
                     window.showInformationMessage("current bookmark: " + item.get_full_uri());
                     let wsf = this.get_wsf_with_node(item);
                     let tvitem = this.get_root_group(wsf!).vicache.get(item.get_full_uri());
-                    BookmarkTreeViewManager.view.reveal(tvitem, {focus: true});
+                    BookmarkTreeViewManager.view.reveal(tvitem, { focus: true });
                 }
             });
         }
